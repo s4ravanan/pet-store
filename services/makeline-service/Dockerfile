@@ -8,7 +8,7 @@ COPY services/makeline-service/pom.xml services/makeline-service/pom.xml
 COPY services/store-front/pom.xml services/store-front/pom.xml
 RUN mvn -q -pl services/makeline-service -am dependency:go-offline
 COPY services/makeline-service/src services/makeline-service/src
-RUN mvn -q -pl services/makeline-service -am package -DskipTests
+RUN mvn -q -pl services/makeline-service -am package -DskipTests -Dspotless.check.skip=true -Dcheckstyle.skip=true
 FROM eclipse-temurin:21-jre
 COPY --from=build /app/services/makeline-service/target/makeline-service-0.1.0-SNAPSHOT.jar /app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]

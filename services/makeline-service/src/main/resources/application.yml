@@ -1,0 +1,4 @@
+server.port: 8083
+spring.rabbitmq.host: ${SPRING_RABBITMQ_HOST:localhost}
+spring.rabbitmq.listener.simple.missing-queues-fatal: false
+management.endpoints.web.exposure.include: health,info

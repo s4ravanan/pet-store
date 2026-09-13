@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: product-service}
+spec: {replicas: 1, selector: {matchLabels: {app: product-service}}, template: {metadata: {labels: {app: product-service}}, spec: {containers: [{name: product-service, image: pet-store/product-service:dev, ports: [{containerPort: 8081}], readinessProbe: {httpGet: {path: /actuator/health/readiness, port: 8081}}}]}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: product-service}
+spec: {selector: {app: product-service}, ports: [{port: 8081, targetPort: 8081}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: order-service}
+spec: {replicas: 1, selector: {matchLabels: {app: order-service}}, template: {metadata: {labels: {app: order-service}}, spec: {containers: [{name: order-service, image: pet-store/order-service:dev, ports: [{containerPort: 8082}], env: [{name: SPRING_RABBITMQ_HOST, value: rabbitmq}], readinessProbe: {httpGet: {path: /actuator/health, port: 8082}}}]}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: order-service}
+spec: {selector: {app: order-service}, ports: [{port: 8082, targetPort: 8082}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: makeline-service}
+spec: {replicas: 1, selector: {matchLabels: {app: makeline-service}}, template: {metadata: {labels: {app: makeline-service}}, spec: {containers: [{name: makeline-service, image: pet-store/makeline-service:dev, ports: [{containerPort: 8083}], env: [{name: SPRING_RABBITMQ_HOST, value: rabbitmq}], readinessProbe: {httpGet: {path: /actuator/health, port: 8083}}}]}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: makeline-service}
+spec: {selector: {app: makeline-service}, ports: [{port: 8083, targetPort: 8083}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: store-front}
+spec: {replicas: 1, selector: {matchLabels: {app: store-front}}, template: {metadata: {labels: {app: store-front}}, spec: {containers: [{name: store-front, image: pet-store/store-front:dev, ports: [{containerPort: 8080}], env: [{name: PRODUCT_SERVICE_URL, value: http://product-service:8081}, {name: ORDER_SERVICE_URL, value: http://order-service:8082}], readinessProbe: {httpGet: {path: /actuator/health, port: 8080}}}]}}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: store-front}
+spec: {type: LoadBalancer, selector: {app: store-front}, ports: [{port: 80, targetPort: 8080}]}

@@ -1,0 +1,23 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck: {test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"], interval: 10s, timeout: 5s, retries: 10}
+  product-service:
+    build: services/product-service
+    ports: ["8081:8081"]
+  order-service:
+    build: services/order-service
+    ports: ["8082:8082"]
+    environment: ["SPRING_RABBITMQ_HOST=rabbitmq"]
+    depends_on: {rabbitmq: {condition: service_healthy}}
+  makeline-service:
+    build: services/makeline-service
+    ports: ["8083:8083"]
+    environment: ["SPRING_RABBITMQ_HOST=rabbitmq"]
+    depends_on: {rabbitmq: {condition: service_healthy}}
+  store-front:
+    build: services/store-front
+    ports: ["8080:8080"]
+    environment: ["PRODUCT_SERVICE_URL=http://product-service:8081", "ORDER_SERVICE_URL=http://order-service:8082"]
+    depends_on: [product-service, order-service]

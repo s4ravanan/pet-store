@@ -2,18 +2,19 @@ package com.dreamworks.petstore.order;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final Map<String, Order> orders = new ConcurrentHashMap<>();
+    private final OrderRepository repository;
     private final RabbitTemplate rabbit;
 
-    public OrderController(RabbitTemplate rabbit) {
+    public OrderController(OrderRepository repository, RabbitTemplate rabbit) {
+        this.repository = repository;
         this.rabbit = rabbit;
     }
 
@@ -21,23 +22,25 @@ public class OrderController {
     public ResponseEntity<Order> place(@RequestBody CreateOrder request) {
         String id = UUID.randomUUID().toString();
         Order order = new Order(id, request.items(), request.customer(), "RECEIVED", Instant.now());
-        orders.put(id, order);
-        rabbit.convertAndSend("petstore.orders", "order.created", order);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(order);
+        Order saved = repository.save(order);
+        rabbit.convertAndSend("petstore.orders", "order.created", saved);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(saved);
     }
 
     @GetMapping
-    public Collection<Order> all() {
-        return orders.values();
+    public List<Order> all() {
+        return repository.findAll();
     }
 
     @GetMapping("/{id}")
     public Order one(@PathVariable String id) {
-        return Optional.ofNullable(orders.get(id)).orElseThrow();
+        return repository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND, "Order not found: " + id));
     }
 
     public record CreateOrder(List<String> items, String customer) {}
-
-    public record Order(
-            String id, List<String> items, String customer, String status, Instant createdAt) {}
 }

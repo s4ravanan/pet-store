@@ -1,0 +1,15 @@
+server:
+  port: 8086
+
+simulation:
+  enabled: ${SIMULATION_ENABLED:true}
+  worker-interval-ms: ${WORKER_INTERVAL_MS:10000}
+
+services:
+  makeline-url: ${MAKELINE_SERVICE_URL:http://localhost:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

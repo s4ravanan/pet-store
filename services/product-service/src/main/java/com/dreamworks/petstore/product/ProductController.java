@@ -1,49 +1,71 @@
 package com.dreamworks.petstore.product;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    private final List<Product> products =
-            List.of(
-                    new Product(
-                            "dog-bed", "Cozy Dog Bed", "A soft bed for happy naps", 29.99, "beds"),
-                    new Product(
-                            "cat-tower",
-                            "Cat Adventure Tower",
-                            "Climb, scratch and explore",
-                            49.99,
-                            "furniture"),
-                    new Product(
-                            "pet-food",
-                            "Premium Pet Food",
-                            "Healthy everyday nutrition",
-                            19.99,
-                            "food"),
-                    new Product(
-                            "chew-toy",
-                            "Rainbow Chew Toy",
-                            "A durable toy for active pets",
-                            12.49,
-                            "toys"));
+    private final ProductRepository repository;
+
+    public ProductController(ProductRepository repository) {
+        this.repository = repository;
+    }
 
     @GetMapping
     public List<Product> all() {
-        return products;
+        return repository.findAll();
     }
 
     @GetMapping("/{id}")
     public Product one(@PathVariable String id) {
-        return products.stream().filter(p -> p.id().equals(id)).findFirst().orElseThrow();
+        return repository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND, "Product not found: " + id));
     }
 
-    public record Product(
-            String id, String name, String description, BigDecimal price, String category) {
-        Product(String i, String n, String d, double p, String c) {
-            this(i, n, d, BigDecimal.valueOf(p), c);
+    @PostMapping
+    public ResponseEntity<Product> create(@RequestBody Product product) {
+        if (product.getId() == null || product.getId().isBlank()) {
+            product.setId(
+                    product.getName().toLowerCase().replaceAll("[^a-z0-9]+", "-")
+                            + "-"
+                            + System.currentTimeMillis());
         }
+        Product saved = repository.save(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PutMapping("/{id}")
+    public Product update(@PathVariable String id, @RequestBody Product product) {
+        return repository
+                .findById(id)
+                .map(
+                        existing -> {
+                            existing.setName(product.getName());
+                            existing.setDescription(product.getDescription());
+                            existing.setPrice(product.getPrice());
+                            existing.setCategory(product.getCategory());
+                            return repository.save(existing);
+                        })
+                .orElseThrow(
+                        () ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND, "Product not found: " + id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id);
+        }
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

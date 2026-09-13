@@ -20,6 +20,9 @@
     <module>services/order-service</module>
     <module>services/makeline-service</module>
     <module>services/store-front</module>
+    <module>services/store-admin</module>
+    <module>services/virtual-customer</module>
+    <module>services/virtual-worker</module>
   </modules>
 
   <properties>

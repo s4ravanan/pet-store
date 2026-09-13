@@ -1,4 +1,29 @@
-server.port: 8083
-spring.rabbitmq.host: ${SPRING_RABBITMQ_HOST:localhost}
-spring.rabbitmq.listener.simple.missing-queues-fatal: false
-management.endpoints.web.exposure.include: health,info
+server:
+  port: 8083
+
+spring:
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        missing-queues-fatal: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/petstore}
+    username: ${SPRING_DATASOURCE_USERNAME:petstore}
+    password: ${SPRING_DATASOURCE_PASSWORD:petstore}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

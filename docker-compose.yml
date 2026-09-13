@@ -1,4 +1,17 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports: ["5432:5432"]
+    environment:
+      - POSTGRES_DB=petstore
+      - POSTGRES_USER=petstore
+      - POSTGRES_PASSWORD=petstore
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U petstore -d petstore"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:3.13-management
     ports: ["5672:5672", "15672:15672"]
@@ -19,6 +32,13 @@ services:
       context: .
       dockerfile: services/product-service/Dockerfile
     ports: ["8081:8081"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
+      - SPRING_DATASOURCE_USERNAME=petstore
+      - SPRING_DATASOURCE_PASSWORD=petstore
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   order-service:
     build:
@@ -27,7 +47,12 @@ services:
     ports: ["8082:8082"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
+      - SPRING_DATASOURCE_USERNAME=petstore
+      - SPRING_DATASOURCE_PASSWORD=petstore
     depends_on:
+      postgres:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
@@ -38,7 +63,12 @@ services:
     ports: ["8083:8083"]
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
+      - SPRING_DATASOURCE_USERNAME=petstore
+      - SPRING_DATASOURCE_PASSWORD=petstore
     depends_on:
+      postgres:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
@@ -53,3 +83,43 @@ services:
     depends_on:
       - product-service
       - order-service
+
+  store-admin:
+    build:
+      context: .
+      dockerfile: services/store-admin/Dockerfile
+    ports: ["8084:8084"]
+    environment:
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+      - ORDER_SERVICE_URL=http://order-service:8082
+      - MAKELINE_SERVICE_URL=http://makeline-service:8083
+    depends_on:
+      - product-service
+      - order-service
+      - makeline-service
+
+  virtual-customer:
+    build:
+      context: .
+      dockerfile: services/virtual-customer/Dockerfile
+    ports: ["8085:8085"]
+    environment:
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+      - ORDER_SERVICE_URL=http://order-service:8082
+      - SIMULATION_ENABLED=true
+      - ORDER_INTERVAL_MS=8000
+    depends_on:
+      - product-service
+      - order-service
+
+  virtual-worker:
+    build:
+      context: .
+      dockerfile: services/virtual-worker/Dockerfile
+    ports: ["8086:8086"]
+    environment:
+      - MAKELINE_SERVICE_URL=http://makeline-service:8083
+      - SIMULATION_ENABLED=true
+      - WORKER_INTERVAL_MS=10000
+    depends_on:
+      - makeline-service

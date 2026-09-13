@@ -1,0 +1,16 @@
+server:
+  port: 8085
+
+simulation:
+  enabled: ${SIMULATION_ENABLED:true}
+  order-interval-ms: ${ORDER_INTERVAL_MS:8000}
+
+services:
+  product-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+  order-url: ${ORDER_SERVICE_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

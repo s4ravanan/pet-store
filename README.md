@@ -1,6 +1,9 @@
 # Pet Store Microservices
 
-A modern Java 21 & Spring Boot 4.1.1 multi-module microservices application modeled after the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo). It features customer-facing and back-office management web dashboards, PostgreSQL persistence with Spring Data JPA, asynchronous event-driven order processing via RabbitMQ, automated background traffic simulators, multi-stage container builds, and Kubernetes manifests.
+A modern, **100% pure Java 21 & Spring Boot 4.1.1** multi-module microservices application modeled after the functional architecture of the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo).
+
+> [!NOTE]
+> **Pure Spring Boot Stack**: Unlike the original polyglot reference project (which used Node.js, Go, Python, and Vue.js), this entire repository is standardized on **Java 21 LTS and Spring Boot 4.1.1**. All web dashboards, back-office portals, background traffic simulators, and microservices are built natively using Spring Boot with zero external runtime dependencies on Node/npm, Python, or Go.
 
 ---
 
@@ -8,17 +11,17 @@ A modern Java 21 & Spring Boot 4.1.1 multi-module microservices application mode
 
 ```mermaid
 flowchart TD
-    subgraph Clients & Traffic Simulators
-        SF["Store Front UI (:8080)"]
-        SA["Store Admin UI (:8084)"]
-        VC["Virtual Customer Simulator (:8085)"]
-        VW["Virtual Worker Simulator (:8086)"]
+    subgraph Clients & Traffic Simulators (Pure Spring Boot)
+        SF["Store Front UI (:8080)<br/>Spring Boot Web"]
+        SA["Store Admin UI (:8084)<br/>Spring Boot Web"]
+        VC["Virtual Customer Simulator (:8085)<br/>Spring Boot Scheduled Runner"]
+        VW["Virtual Worker Simulator (:8086)<br/>Spring Boot Scheduled Runner"]
     end
 
-    subgraph Core Business Services
-        PS["Product Service (:8081)"]
-        OS["Order Service (:8082)"]
-        MS["Makeline Service (:8083)"]
+    subgraph Core Business Services (Pure Spring Boot)
+        PS["Product Service (:8081)<br/>Spring Data JPA + PostgreSQL"]
+        OS["Order Service (:8082)<br/>Spring Data JPA + AMQP"]
+        MS["Makeline Service (:8083)<br/>Spring Data JPA + AMQP"]
     end
 
     subgraph Persistence & Messaging
@@ -49,29 +52,29 @@ flowchart TD
 
 | Service | Port | Tech Stack | Role & Functionality |
 |---|:---:|:---:|---|
-| **`store-front`** | `8080` | Spring Boot 4.1.1, HTML5, Vanilla JS | Customer shopping web interface and reverse proxy for products & checkout |
-| **`store-admin`** | `8084` | Spring Boot 4.1.1, HTML5, CSS3, JS | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
-| **`product-service`** | `8081` | Spring Boot 4.1.1, Spring Data JPA | Product catalog management with PostgreSQL relational storage and seed data |
-| **`order-service`** | `8082` | Spring Boot 4.1.1, Spring Data JPA, AMQP | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
-| **`makeline-service`** | `8083` | Spring Boot 4.1.1, Spring Data JPA, AMQP | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
-| **`virtual-customer`** | `8085` | Spring Boot 4.1.1, Scheduled Runner | Background load generator simulating randomized customer purchases |
-| **`virtual-worker`** | `8086` | Spring Boot 4.1.1, Scheduled Runner | Background fulfillment simulator completing pending makeline kitchen orders |
+| **`store-front`** | `8080` | **Spring Boot 4.1.1 Web** (Embedded UI & API Gateway) | Customer shopping web interface and reverse proxy for products & checkout |
+| **`store-admin`** | `8084` | **Spring Boot 4.1.1 Web** (Responsive Admin Portal) | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
+| **`product-service`** | `8081` | **Spring Boot 4.1.1, Spring Data JPA** | Product catalog management with PostgreSQL relational storage and seed data |
+| **`order-service`** | `8082` | **Spring Boot 4.1.1, Spring Data JPA, AMQP** | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
+| **`makeline-service`** | `8083` | **Spring Boot 4.1.1, Spring Data JPA, AMQP** | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
+| **`virtual-customer`** | `8085` | **Spring Boot 4.1.1 Scheduled Runner** | Background load generator simulating randomized customer purchases |
+| **`virtual-worker`** | `8086` | **Spring Boot 4.1.1 Scheduled Runner** | Background fulfillment simulator completing pending makeline kitchen orders |
 | **`postgres`** | `5432` | PostgreSQL 16 (Alpine) | Central database storing catalog items, order records, and makeline queue |
 | **`rabbitmq`** | `5672` / `15672` | RabbitMQ 3.13 Management | Event broker with web dashboard (`guest`/`guest`) |
 
 ---
 
-## Azure AKS Store Demo Parity Matrix
+## Azure Reference vs. Pure Spring Boot Parity Matrix
 
-| Feature | Azure AKS Store Demo | This Java / Spring Boot Repository |
+| Feature | Original Azure AKS Demo (Polyglot) | This Repository (**100% Pure Spring Boot**) |
 |---|:---:|:---:|
-| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 & Spring Boot 4.1.1** (Standardized Reactor) |
-| **Store Front UI** | Vue.js | **Spring Boot + HTML5/CSS/JS (Port 8080)** |
-| **Store Admin UI** | Vue.js | **Spring Boot + Responsive Admin Portal (Port 8084)** |
-| **Product Catalog** | Go / In-Memory & AI Search | **Spring Data JPA + PostgreSQL (Port 8081)** |
-| **Order Processing** | Node.js / Express | **Spring Boot REST + Spring Data JPA (Port 8082)** |
-| **Makeline Fulfillment** | Go / In-Memory | **Spring AMQP Listener + JPA Entity Queue (Port 8083)** |
-| **Traffic Simulators** | Python (`virtual-customer`, `virtual-worker`) | **Spring Boot Scheduled Runners (Ports 8085, 8086)** |
+| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 LTS & Spring Boot 4.1.1** across all 7 services |
+| **Store Front UI** | Vue.js + Node.js | **Spring Boot Web (`store-front`)** (Port 8080) |
+| **Store Admin UI** | Vue.js + Node.js | **Spring Boot Web (`store-admin`)** (Port 8084) |
+| **Product Catalog** | Go / In-Memory & AI Search | **Spring Boot + Spring Data JPA (`product-service`)** (Port 8081) |
+| **Order Processing** | Node.js / Express | **Spring Boot REST + JPA (`order-service`)** (Port 8082) |
+| **Makeline Fulfillment** | Go / In-Memory | **Spring AMQP Listener + JPA Entity Queue (`makeline-service`)** (Port 8083) |
+| **Traffic Simulators** | Python (`virtual-customer`, `virtual-worker`) | **Spring Boot Scheduled Runners** (Ports 8085, 8086) |
 | **Messaging Bus** | RabbitMQ | **RabbitMQ with Exchange & Dead-Letter Queue** |
 | **Database** | MongoDB / Cosmos DB | **PostgreSQL 16 Relational Tables** |
 

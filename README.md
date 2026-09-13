@@ -11,20 +11,20 @@ A modern, **100% pure Java 21 & Spring Boot 4.1.1** multi-module microservices a
 
 ```mermaid
 flowchart TD
-    subgraph Clients & Traffic Simulators (Pure Spring Boot)
+    subgraph clients["Clients and Traffic Simulators (Pure Spring Boot)"]
         SF["Store Front UI (:8080)<br/>Spring Boot Web"]
         SA["Store Admin UI (:8084)<br/>Spring Boot Web"]
         VC["Virtual Customer Simulator (:8085)<br/>Spring Boot Scheduled Runner"]
         VW["Virtual Worker Simulator (:8086)<br/>Spring Boot Scheduled Runner"]
     end
 
-    subgraph Core Business Services (Pure Spring Boot)
+    subgraph services["Core Business Services (Pure Spring Boot)"]
         PS["Product Service (:8081)<br/>Spring Data JPA + PostgreSQL"]
         OS["Order Service (:8082)<br/>Spring Data JPA + AMQP"]
         MS["Makeline Service (:8083)<br/>Spring Data JPA + AMQP"]
     end
 
-    subgraph Persistence & Messaging
+    subgraph persistence["Persistence and Messaging"]
         PG[("PostgreSQL 16 (:5432)")]
         RMQ{{"RabbitMQ 3.13 (:5672/:15672)"}}
     end

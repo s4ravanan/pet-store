@@ -1,39 +1,39 @@
 # Pet Store Microservices
 
-A modern Java 21 & Spring Boot 3 multi-module microservices application modeled after the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo). It features customer-facing and back-office web dashboards, PostgreSQL persistence with Spring Data JPA, asynchronous event-driven order processing via RabbitMQ, automated background traffic simulators, multi-stage container builds, and Kubernetes manifests.
+A modern Java 21 & Spring Boot 3 multi-module microservices application modeled after the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo). It features customer-facing and back-office management web dashboards, PostgreSQL persistence with Spring Data JPA, asynchronous event-driven order processing via RabbitMQ, automated background traffic simulators, multi-stage container builds, and Kubernetes manifests.
 
 ---
 
-## System Architecture
+## Architecture Overview
 
 ```mermaid
 flowchart TD
-    subgraph Client Apps
+    subgraph Clients & Traffic Simulators
         SF["Store Front UI (:8080)"]
         SA["Store Admin UI (:8084)"]
         VC["Virtual Customer Simulator (:8085)"]
         VW["Virtual Worker Simulator (:8086)"]
     end
 
-    subgraph Core Services
+    subgraph Core Business Services
         PS["Product Service (:8081)"]
         OS["Order Service (:8082)"]
         MS["Makeline Service (:8083)"]
     end
 
-    subgraph Data & Messaging
+    subgraph Persistence & Messaging
         PG[("PostgreSQL 16 (:5432)")]
         RMQ{{"RabbitMQ 3.13 (:5672/:15672)"}}
     end
 
-    SF -->|View Catalog| PS
-    SF -->|Place Orders| OS
-    VC -->|Random Orders| OS
+    SF -->|Browse Catalog| PS
+    SF -->|Submit Orders| OS
+    VC -->|Periodic Orders| OS
     VC -->|Fetch Catalog| PS
 
-    SA -->|Manage Products| PS
+    SA -->|Catalog Manager| PS
     SA -->|Order History| OS
-    SA -->|Fulfillment Queue| MS
+    SA -->|Kitchen Queue| MS
     VW -->|Complete Orders| MS
 
     OS -->|Persist Order| PG
@@ -47,36 +47,95 @@ flowchart TD
 
 ## Services & Ports Reference
 
-| Service | Port | Technology | Description |
+| Service | Port | Tech Stack | Role & Functionality |
 |---|:---:|:---:|---|
-| **`store-front`** | `8080` | Spring Boot 3 / HTML5 / JS | Customer shopping web UI & reverse proxy gateway |
-| **`store-admin`** | `8084` | Spring Boot 3 / HTML5 / JS | Back-office management portal for catalog & kitchen makeline queue |
-| **`product-service`** | `8081` | Spring Boot 3 / Spring Data JPA | Product catalog with PostgreSQL relational persistence and CRUD APIs |
-| **`order-service`** | `8082` | Spring Boot 3 / JPA / RabbitMQ | Order creation, PostgreSQL persistence, and AMQP event publishing |
-| **`makeline-service`** | `8083` | Spring Boot 3 / JPA / RabbitMQ | Asynchronous AMQP consumer, order fulfillment queue, and status management |
-| **`virtual-customer`** | `8085` | Spring Boot 3 / Scheduled Runner | Background traffic generator creating realistic customer orders periodically |
-| **`virtual-worker`** | `8086` | Spring Boot 3 / Scheduled Runner | Background kitchen worker processing and completing makeline orders |
-| **`postgres`** | `5432` | PostgreSQL 16 (Alpine) | Central relational persistence store (`petstore` database) |
-| **`rabbitmq`** | `5672` / `15672` | RabbitMQ 3.13 Management | Message broker with web management console |
+| **`store-front`** | `8080` | Spring Boot 3, HTML5, Vanilla JS | Customer shopping web interface and reverse proxy for products & checkout |
+| **`store-admin`** | `8084` | Spring Boot 3, HTML5, CSS3, JS | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
+| **`product-service`** | `8081` | Spring Boot 3, Spring Data JPA | Product catalog management with PostgreSQL relational storage and seed data |
+| **`order-service`** | `8082` | Spring Boot 3, Spring Data JPA, AMQP | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
+| **`makeline-service`** | `8083` | Spring Boot 3, Spring Data JPA, AMQP | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
+| **`virtual-customer`** | `8085` | Spring Boot 3, Scheduled Runner | Background load generator simulating randomized customer purchases |
+| **`virtual-worker`** | `8086` | Spring Boot 3, Scheduled Runner | Background fulfillment simulator completing pending makeline kitchen orders |
+| **`postgres`** | `5432` | PostgreSQL 16 (Alpine) | Central database storing catalog items, order records, and makeline queue |
+| **`rabbitmq`** | `5672` / `15672` | RabbitMQ 3.13 Management | Event broker with web dashboard (`guest`/`guest`) |
+
+---
+
+## Azure AKS Store Demo Parity Matrix
+
+| Feature | Azure AKS Store Demo | This Java / Spring Boot Repository |
+|---|:---:|:---:|
+| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 & Spring Boot 3** (Standardized Reactor) |
+| **Store Front UI** | Vue.js | **Spring Boot + HTML5/CSS/JS (Port 8080)** |
+| **Store Admin UI** | Vue.js | **Spring Boot + Responsive Admin Portal (Port 8084)** |
+| **Product Catalog** | Go / In-Memory & AI Search | **Spring Data JPA + PostgreSQL (Port 8081)** |
+| **Order Processing** | Node.js / Express | **Spring Boot REST + Spring Data JPA (Port 8082)** |
+| **Makeline Fulfillment** | Go / In-Memory | **Spring AMQP Listener + JPA Entity Queue (Port 8083)** |
+| **Traffic Simulators** | Python (`virtual-customer`, `virtual-worker`) | **Spring Boot Scheduled Runners (Ports 8085, 8086)** |
+| **Messaging Bus** | RabbitMQ | **RabbitMQ with Exchange & Dead-Letter Queue** |
+| **Database** | MongoDB / Cosmos DB | **PostgreSQL 16 Relational Tables** |
+
+---
+
+## Database Relational Model
+
+The PostgreSQL instance (`petstore` database) automatically creates and manages relational tables:
+
+```mermaid
+erDiagram
+    PRODUCTS {
+        string id PK
+        string name
+        string description
+        numeric price
+        string category
+    }
+
+    ORDERS {
+        string id PK
+        string customer
+        string status
+        timestamp created_at
+    }
+
+    ORDER_ITEMS {
+        string order_id FK
+        string item_name
+    }
+
+    MAKELINE_ORDERS {
+        string id PK
+        string customer
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    MAKELINE_ORDER_ITEMS {
+        string makeline_order_id FK
+        string item_name
+    }
+
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    MAKELINE_ORDERS ||--o{ MAKELINE_ORDER_ITEMS : contains
+```
 
 ---
 
 ## Prerequisites
 
-- **Podman 5.x+** with machine initialized and running:
+- **Podman 5.x+** (or Docker Desktop) with machine running:
   ```powershell
   podman machine start
   ```
-- **Podman Compose** or Docker Compose CLI configured with the Podman / Docker socket.
+- **Podman Compose** or Docker Compose CLI.
 - **Java 21 & Maven 3.9+** (optional, for local IDE development).
 
 ---
 
-## Running Locally with Podman / Docker Compose
+## Quickstart: Running with Podman / Docker Compose
 
-### 1. Start the entire ecosystem
-
-Run Docker/Podman compose from the repository root:
+### 1. Launch All Services
 
 ```powershell
 # Using podman compose
@@ -86,15 +145,15 @@ podman compose up --build -d
 docker-compose up -d
 ```
 
-### 2. Verify all containers
+### 2. Verify Container Health
 
 ```powershell
 podman ps
 ```
 
-All 9 containers will be up and running:
-- `pet-store-postgres-1`
-- `pet-store-rabbitmq-1`
+Expected output showing 9 active containers:
+- `pet-store-postgres-1` (`healthy`)
+- `pet-store-rabbitmq-1` (`healthy`)
 - `pet-store-product-service-1`
 - `pet-store-order-service-1`
 - `pet-store-makeline-service-1`
@@ -103,27 +162,31 @@ All 9 containers will be up and running:
 - `pet-store-virtual-customer-1`
 - `pet-store-virtual-worker-1`
 
-### 3. Open Web Dashboards
+### 3. Open Applications in Browser
 
-- **Store Front**: [http://localhost:8080](http://localhost:8080) — Customer catalog and cart checkout.
-- **Store Admin**: [http://localhost:8084](http://localhost:8084) — Real-time kitchen makeline, catalog editor, and order logs.
-- **RabbitMQ Console**: [http://localhost:15672](http://localhost:15672) (User: `guest`, Password: `guest`).
+- **Customer Store Front**: [http://localhost:8080](http://localhost:8080)
+- **Store Admin Dashboard**: [http://localhost:8084](http://localhost:8084)
+- **RabbitMQ Management**: [http://localhost:15672](http://localhost:15672) (User: `guest`, Password: `guest`)
 
 ---
 
-## End-to-End Testing & Verification
+## Interactive Walkthrough & Testing
 
-### Observe Background Simulators
+### 1. Watch Background Traffic Simulation
 
-The **Virtual Customer** creates orders automatically every few seconds, and the **Virtual Worker** picks up `IN_PROGRESS` kitchen orders and completes them:
+The **Virtual Customer** (`:8085`) and **Virtual Worker** (`:8086`) run automated cycles:
 
 ```powershell
 docker-compose logs -f virtual-customer virtual-worker
 ```
 
-### Manual Order Placement
+Sample output:
+```text
+virtual-customer-1 | Placed automated order: id=34fc2019... customer=Virtual-Customer-Ethan items=[dog-bed]
+virtual-worker-1   | Fulfilled and completed order: id=34fc2019...
+```
 
-**Place a new customer order:**
+### 2. Place Orders Manually via Store Front API
 
 ```powershell
 # PowerShell
@@ -137,35 +200,54 @@ curl -X POST http://localhost:8080/api/orders \
   -d '{"customer":"Alice","items":["dog-bed","cat-tower"]}'
 ```
 
-### Check Makeline Queue
+### 3. Query Makeline Kitchen Queue
 
 ```powershell
-# Fetch all kitchen orders (IN_PROGRESS and COMPLETED)
+# View pending (IN_PROGRESS) kitchen orders
+Invoke-RestMethod -Uri "http://localhost:8083/api/makeline/orders?status=IN_PROGRESS" | ConvertTo-Json -Depth 5
+
+# View all orders (including COMPLETED)
 Invoke-RestMethod -Uri "http://localhost:8083/api/makeline/orders" | ConvertTo-Json -Depth 5
 ```
 
-### Complete an Order Manually via Admin API
+### 4. Complete an Order via Store Admin API
 
 ```powershell
-# Mark order completed
 Invoke-RestMethod -Uri "http://localhost:8084/api/admin/makeline/orders/<ORDER_ID>/complete" -Method Post
 ```
 
-### Product Catalog CRUD
+### 5. Manage Products via Store Admin Catalog API
 
 ```powershell
-# List products
-Invoke-RestMethod -Uri "http://localhost:8081/api/products"
-
 # Add a new product
-Invoke-RestMethod -Uri "http://localhost:8081/api/products" -Method Post -ContentType "application/json" -Body '{"id":"laser-pointer","name":"Laser Pointer","description":"Hours of fun for cats","price":9.99,"category":"toys"}'
+Invoke-RestMethod -Uri "http://localhost:8084/api/admin/products" -Method Post -ContentType "application/json" -Body '{"id":"laser-pointer","name":"Laser Pointer Toy","description":"Hours of entertainment for pets","price":14.99,"category":"toys"}'
+
+# Verify product appears in catalog
+Invoke-RestMethod -Uri "http://localhost:8081/api/products"
 ```
 
 ---
 
-## Building Images Manually with Podman
+## Configuration & Environment Variables
 
-Each service uses an optimized multi-stage `Dockerfile` leveraging Java 21:
+| Variable | Default Value | Description |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/petstore` | JDBC connection string |
+| `SPRING_DATASOURCE_USERNAME` | `petstore` | PostgreSQL username |
+| `SPRING_DATASOURCE_PASSWORD` | `petstore` | PostgreSQL password |
+| `SPRING_RABBITMQ_HOST` | `rabbitmq` | AMQP host |
+| `SPRING_RABBITMQ_PORT` | `5672` | AMQP port |
+| `PRODUCT_SERVICE_URL` | `http://product-service:8081` | Product service base URL for proxies & simulators |
+| `ORDER_SERVICE_URL` | `http://order-service:8082` | Order service base URL for front & simulators |
+| `MAKELINE_SERVICE_URL` | `http://makeline-service:8083` | Makeline service base URL for admin & worker |
+| `SIMULATION_ORDER_INTERVAL_MS` | `8000` | Frequency for `virtual-customer` order generation (ms) |
+| `SIMULATION_WORKER_INTERVAL_MS` | `10000` | Frequency for `virtual-worker` fulfillment polling (ms) |
+
+---
+
+## Manual Multi-Stage Container Builds
+
+To build individual multi-stage Docker/Podman images from repository root:
 
 ```powershell
 podman build -t pet-store-product-service:latest -f services/product-service/Dockerfile .
@@ -179,11 +261,12 @@ podman build -t pet-store-virtual-worker:latest -f services/virtual-worker/Docke
 
 ---
 
-## Stopping the Services
+## Stopping & Teardown
 
 ```powershell
+# Stop and remove all containers and data volumes
 docker-compose down -v
-# or
+# Or
 podman compose down -v
 ```
 
@@ -194,6 +277,6 @@ podman compose down -v
 Formatting and enforcement rules are centralized in the Maven reactor:
 
 ```powershell
-mvn spotless:apply   # Formats Java files using Google Java Format
-mvn spotless:check   # Validates formatting
+mvn spotless:apply   # Formats Java sources using Google Java Format
+mvn spotless:check   # Validates formatting during CI/CD
 ```

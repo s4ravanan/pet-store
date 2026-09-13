@@ -1,6 +1,6 @@
 # Pet Store Microservices
 
-A modern Java 21 & Spring Boot 3 multi-module microservices application modeled after the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo). It features customer-facing and back-office management web dashboards, PostgreSQL persistence with Spring Data JPA, asynchronous event-driven order processing via RabbitMQ, automated background traffic simulators, multi-stage container builds, and Kubernetes manifests.
+A modern Java 21 & Spring Boot 4.1.1 multi-module microservices application modeled after the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo). It features customer-facing and back-office management web dashboards, PostgreSQL persistence with Spring Data JPA, asynchronous event-driven order processing via RabbitMQ, automated background traffic simulators, multi-stage container builds, and Kubernetes manifests.
 
 ---
 
@@ -49,13 +49,13 @@ flowchart TD
 
 | Service | Port | Tech Stack | Role & Functionality |
 |---|:---:|:---:|---|
-| **`store-front`** | `8080` | Spring Boot 3, HTML5, Vanilla JS | Customer shopping web interface and reverse proxy for products & checkout |
-| **`store-admin`** | `8084` | Spring Boot 3, HTML5, CSS3, JS | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
-| **`product-service`** | `8081` | Spring Boot 3, Spring Data JPA | Product catalog management with PostgreSQL relational storage and seed data |
-| **`order-service`** | `8082` | Spring Boot 3, Spring Data JPA, AMQP | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
-| **`makeline-service`** | `8083` | Spring Boot 3, Spring Data JPA, AMQP | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
-| **`virtual-customer`** | `8085` | Spring Boot 3, Scheduled Runner | Background load generator simulating randomized customer purchases |
-| **`virtual-worker`** | `8086` | Spring Boot 3, Scheduled Runner | Background fulfillment simulator completing pending makeline kitchen orders |
+| **`store-front`** | `8080` | Spring Boot 4.1.1, HTML5, Vanilla JS | Customer shopping web interface and reverse proxy for products & checkout |
+| **`store-admin`** | `8084` | Spring Boot 4.1.1, HTML5, CSS3, JS | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
+| **`product-service`** | `8081` | Spring Boot 4.1.1, Spring Data JPA | Product catalog management with PostgreSQL relational storage and seed data |
+| **`order-service`** | `8082` | Spring Boot 4.1.1, Spring Data JPA, AMQP | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
+| **`makeline-service`** | `8083` | Spring Boot 4.1.1, Spring Data JPA, AMQP | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
+| **`virtual-customer`** | `8085` | Spring Boot 4.1.1, Scheduled Runner | Background load generator simulating randomized customer purchases |
+| **`virtual-worker`** | `8086` | Spring Boot 4.1.1, Scheduled Runner | Background fulfillment simulator completing pending makeline kitchen orders |
 | **`postgres`** | `5432` | PostgreSQL 16 (Alpine) | Central database storing catalog items, order records, and makeline queue |
 | **`rabbitmq`** | `5672` / `15672` | RabbitMQ 3.13 Management | Event broker with web dashboard (`guest`/`guest`) |
 
@@ -65,7 +65,7 @@ flowchart TD
 
 | Feature | Azure AKS Store Demo | This Java / Spring Boot Repository |
 |---|:---:|:---:|
-| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 & Spring Boot 3** (Standardized Reactor) |
+| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 & Spring Boot 4.1.1** (Standardized Reactor) |
 | **Store Front UI** | Vue.js | **Spring Boot + HTML5/CSS/JS (Port 8080)** |
 | **Store Admin UI** | Vue.js | **Spring Boot + Responsive Admin Portal (Port 8084)** |
 | **Product Catalog** | Go / In-Memory & AI Search | **Spring Data JPA + PostgreSQL (Port 8081)** |
@@ -178,12 +178,6 @@ The **Virtual Customer** (`:8085`) and **Virtual Worker** (`:8086`) run automate
 
 ```powershell
 docker-compose logs -f virtual-customer virtual-worker
-```
-
-Sample output:
-```text
-virtual-customer-1 | Placed automated order: id=34fc2019... customer=Virtual-Customer-Ethan items=[dog-bed]
-virtual-worker-1   | Fulfilled and completed order: id=34fc2019...
 ```
 
 ### 2. Place Orders Manually via Store Front API

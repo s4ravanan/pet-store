@@ -12,12 +12,15 @@ spring:
           service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8086}
           prefer-ip: false
 
-simulation:
-  enabled: ${SIMULATION_ENABLED:true}
-  worker-interval-ms: ${WORKER_INTERVAL_MS:10000}
+simulator:
+  worker:
+    enabled: ${SIMULATOR_WORKER_ENABLED:true}
+    interval-ms: ${SIMULATOR_WORKER_INTERVAL_MS:10000}
+    makeline-service-url: ${MAKELINE_SERVICE_URL:http://localhost:8083}
 
-services:
-  makeline-url: ${MAKELINE_SERVICE_URL:http://localhost:8083}
+logging:
+  file:
+    name: logs/virtual-worker.log
 
 management:
   endpoints:
@@ -27,3 +30,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

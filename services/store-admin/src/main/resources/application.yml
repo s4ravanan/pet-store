@@ -12,6 +12,15 @@ spring:
           service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8084}
           prefer-ip: false
 
+petstore:
+  product-service-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+  order-service-url: ${ORDER_SERVICE_URL:http://localhost:8082}
+  makeline-service-url: ${MAKELINE_SERVICE_URL:http://localhost:8083}
+
+logging:
+  file:
+    name: logs/store-admin.log
+
 management:
   endpoints:
     web:
@@ -20,3 +29,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

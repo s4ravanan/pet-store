@@ -23,6 +23,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+logging:
+  file:
+    name: logs/product-service.log
+
 management:
   endpoints:
     web:
@@ -31,3 +35,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

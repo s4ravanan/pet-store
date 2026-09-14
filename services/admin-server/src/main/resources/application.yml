@@ -5,6 +5,10 @@ spring:
   application:
     name: admin-server
 
+logging:
+  file:
+    name: logs/admin-server.log
+
 management:
   endpoints:
     web:
@@ -13,3 +17,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

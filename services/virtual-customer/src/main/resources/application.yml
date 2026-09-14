@@ -12,13 +12,16 @@ spring:
           service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8085}
           prefer-ip: false
 
-simulation:
-  enabled: ${SIMULATION_ENABLED:true}
-  order-interval-ms: ${ORDER_INTERVAL_MS:8000}
+simulator:
+  customer:
+    enabled: ${SIMULATOR_CUSTOMER_ENABLED:true}
+    interval-ms: ${SIMULATOR_CUSTOMER_INTERVAL_MS:8000}
+    product-service-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+    order-service-url: ${ORDER_SERVICE_URL:http://localhost:8082}
 
-services:
-  product-url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
-  order-url: ${ORDER_SERVICE_URL:http://localhost:8082}
+logging:
+  file:
+    name: logs/virtual-customer.log
 
 management:
   endpoints:
@@ -28,3 +31,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

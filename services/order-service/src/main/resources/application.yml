@@ -11,11 +11,6 @@ spring:
         instance:
           service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8082}
           prefer-ip: false
-  rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
-    username: ${SPRING_RABBITMQ_USERNAME:guest}
-    password: ${SPRING_RABBITMQ_PASSWORD:guest}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/petstore}
     username: ${SPRING_DATASOURCE_USERNAME:petstore}
@@ -27,6 +22,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+logging:
+  file:
+    name: logs/order-service.log
 
 management:
   endpoints:
@@ -36,3 +40,5 @@ management:
   endpoint:
     health:
       show-details: always
+    logfile:
+      enabled: true

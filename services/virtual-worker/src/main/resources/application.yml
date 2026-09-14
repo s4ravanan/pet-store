@@ -1,6 +1,17 @@
 server:
   port: 8086
 
+spring:
+  application:
+    name: virtual-worker
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9000}
+        instance:
+          service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8086}
+          prefer-ip: false
+
 simulation:
   enabled: ${SIMULATION_ENABLED:true}
   worker-interval-ms: ${WORKER_INTERVAL_MS:10000}
@@ -12,4 +23,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

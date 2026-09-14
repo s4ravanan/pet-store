@@ -1,8 +1,22 @@
 server:
   port: 8084
 
+spring:
+  application:
+    name: store-admin
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9000}
+        instance:
+          service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8084}
+          prefer-ip: false
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

@@ -3,7 +3,7 @@
 A modern, **100% pure Java 21 & Spring Boot 4.1.1** multi-module microservices application modeled after the functional architecture of the [Azure AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo).
 
 > [!NOTE]
-> **Pure Spring Boot Stack**: Unlike the original polyglot reference project (which used Node.js, Go, Python, and Vue.js), this entire repository is standardized on **Java 21 LTS and Spring Boot 4.1.1**. All web dashboards, back-office portals, background traffic simulators, and microservices are built natively using Spring Boot with zero external runtime dependencies on Node/npm, Python, or Go.
+> **Pure Spring Boot Stack**: Unlike the original polyglot reference project (which used Node.js, Go, Python, and Vue.js), this entire repository is standardized on **Java 21 LTS and Spring Boot 4.1.1**. All web dashboards, back-office portals, background traffic simulators, observability dashboards, and microservices are built natively using Spring Boot with zero external runtime dependencies on Node/npm, Python, or Go.
 
 ---
 
@@ -11,6 +11,10 @@ A modern, **100% pure Java 21 & Spring Boot 4.1.1** multi-module microservices a
 
 ```mermaid
 flowchart TD
+    subgraph monitoring["Centralized Observability (Pure Spring Boot)"]
+        SBA["Spring Boot Admin Server (:9000)<br/>Codecentric SBA + Actuator Dashboard"]
+    end
+
     subgraph clients["Clients and Traffic Simulators (Pure Spring Boot)"]
         SF["Store Front UI (:8080)<br/>Spring Boot Web"]
         SA["Store Admin UI (:8084)<br/>Spring Boot Web"]
@@ -44,6 +48,14 @@ flowchart TD
     RMQ -->|Consume 'order.created'| MS
     MS -->|Persist Makeline Order| PG
     PS -->|Persist Products| PG
+
+    SBA -.->|Monitor Actuator| SF
+    SBA -.->|Monitor Actuator| SA
+    SBA -.->|Monitor Actuator| VC
+    SBA -.->|Monitor Actuator| VW
+    SBA -.->|Monitor Actuator| PS
+    SBA -.->|Monitor Actuator| OS
+    SBA -.->|Monitor Actuator| MS
 ```
 
 ---
@@ -52,13 +64,14 @@ flowchart TD
 
 | Service | Port | Tech Stack | Role & Functionality |
 |---|:---:|:---:|---|
-| **`store-front`** | `8080` | **Spring Boot 4.1.1 Web** (Embedded UI & API Gateway) | Customer shopping web interface and reverse proxy for products & checkout |
-| **`store-admin`** | `8084` | **Spring Boot 4.1.1 Web** (Responsive Admin Portal) | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
-| **`product-service`** | `8081` | **Spring Boot 4.1.1, Spring Data JPA** | Product catalog management with PostgreSQL relational storage and seed data |
-| **`order-service`** | `8082` | **Spring Boot 4.1.1, Spring Data JPA, AMQP** | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
-| **`makeline-service`** | `8083` | **Spring Boot 4.1.1, Spring Data JPA, AMQP** | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
-| **`virtual-customer`** | `8085` | **Spring Boot 4.1.1 Scheduled Runner** | Background load generator simulating randomized customer purchases |
-| **`virtual-worker`** | `8086` | **Spring Boot 4.1.1 Scheduled Runner** | Background fulfillment simulator completing pending makeline kitchen orders |
+| **`admin-server`** | `9000` | **Spring Boot 4.1.1, Spring Boot Admin 3.4.4** | Centralized observability UI: JVM metrics, health, environment, loggers, thread dumps |
+| **`store-front`** | `8080` | **Spring Boot 4.1.1 Web, SBA Client** | Customer shopping web interface and reverse proxy for products & checkout |
+| **`store-admin`** | `8084` | **Spring Boot 4.1.1 Web, SBA Client** | Back-office operations portal: Live kitchen makeline, catalog CRUD, order history |
+| **`product-service`** | `8081` | **Spring Boot 4.1.1, Spring Data JPA, SBA Client** | Product catalog management with PostgreSQL relational storage and seed data |
+| **`order-service`** | `8082` | **Spring Boot 4.1.1, Spring Data JPA, AMQP, SBA Client** | Order intake API, PostgreSQL storage, and `order.created` RabbitMQ event producer |
+| **`makeline-service`** | `8083` | **Spring Boot 4.1.1, Spring Data JPA, AMQP, SBA Client** | Order fulfillment processing, RabbitMQ listener, and order lifecycle management |
+| **`virtual-customer`** | `8085` | **Spring Boot 4.1.1 Scheduled Runner, SBA Client** | Background load generator simulating randomized customer purchases |
+| **`virtual-worker`** | `8086` | **Spring Boot 4.1.1 Scheduled Runner, SBA Client** | Background fulfillment simulator completing pending makeline kitchen orders |
 | **`postgres`** | `5432` | PostgreSQL 16 (Alpine) | Central database storing catalog items, order records, and makeline queue |
 | **`rabbitmq`** | `5672` / `15672` | RabbitMQ 3.13 Management | Event broker with web dashboard (`guest`/`guest`) |
 
@@ -68,7 +81,8 @@ flowchart TD
 
 | Feature | Original Azure AKS Demo (Polyglot) | This Repository (**100% Pure Spring Boot**) |
 |---|:---:|:---:|
-| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 LTS & Spring Boot 4.1.1** across all 7 services |
+| **Language & Runtime** | Polyglot (Go, Node.js, Python, Rust) | **Java 21 LTS & Spring Boot 4.1.1** across all 8 services |
+| **Observability Dashboard** | External tools / Polyglot APM | **Spring Boot Admin Server (`admin-server`)** (Port 9000) |
 | **Store Front UI** | Vue.js + Node.js | **Spring Boot Web (`store-front`)** (Port 8080) |
 | **Store Admin UI** | Vue.js + Node.js | **Spring Boot Web (`store-admin`)** (Port 8084) |
 | **Product Catalog** | Go / In-Memory & AI Search | **Spring Boot + Spring Data JPA (`product-service`)** (Port 8081) |
@@ -154,9 +168,10 @@ docker-compose up -d
 podman ps
 ```
 
-Expected output showing 9 active containers:
+Expected output showing 10 active containers:
 - `pet-store-postgres-1` (`healthy`)
 - `pet-store-rabbitmq-1` (`healthy`)
+- `pet-store-admin-server-1`
 - `pet-store-product-service-1`
 - `pet-store-order-service-1`
 - `pet-store-makeline-service-1`
@@ -167,6 +182,7 @@ Expected output showing 9 active containers:
 
 ### 3. Open Applications in Browser
 
+- **Spring Boot Admin UI**: [http://localhost:9000](http://localhost:9000) (Centralized metrics, loggers, health & actuator dashboard)
 - **Customer Store Front**: [http://localhost:8080](http://localhost:8080)
 - **Store Admin Dashboard**: [http://localhost:8084](http://localhost:8084)
 - **RabbitMQ Management**: [http://localhost:15672](http://localhost:15672) (User: `guest`, Password: `guest`)
@@ -175,7 +191,15 @@ Expected output showing 9 active containers:
 
 ## Interactive Walkthrough & Testing
 
-### 1. Watch Background Traffic Simulation
+### 1. Spring Boot Admin Observability
+
+Navigate to [http://localhost:9000](http://localhost:9000) to view:
+- **Applications Grid**: Live status (`UP`/`DOWN`), build versions, process uptime for all 7 registered client services.
+- **Metrics & Insights**: Real-time JVM memory heaps, garbage collection cycles, HTTP request counts and response latencies.
+- **Dynamic Logging**: View and adjust logging levels (`DEBUG`, `INFO`, `WARN`, `TRACE`) dynamically at runtime without restarting services.
+- **Thread Dumps & Environment**: Interactive thread stack viewer and environment property introspection.
+
+### 2. Watch Background Traffic Simulation
 
 The **Virtual Customer** (`:8085`) and **Virtual Worker** (`:8086`) run automated cycles:
 
@@ -183,7 +207,7 @@ The **Virtual Customer** (`:8085`) and **Virtual Worker** (`:8086`) run automate
 docker-compose logs -f virtual-customer virtual-worker
 ```
 
-### 2. Place Orders Manually via Store Front API
+### 3. Place Orders Manually via Store Front API
 
 ```powershell
 # PowerShell
@@ -197,7 +221,7 @@ curl -X POST http://localhost:8080/api/orders \
   -d '{"customer":"Alice","items":["dog-bed","cat-tower"]}'
 ```
 
-### 3. Query Makeline Kitchen Queue
+### 4. Query Makeline Kitchen Queue
 
 ```powershell
 # View pending (IN_PROGRESS) kitchen orders
@@ -207,13 +231,13 @@ Invoke-RestMethod -Uri "http://localhost:8083/api/makeline/orders?status=IN_PROG
 Invoke-RestMethod -Uri "http://localhost:8083/api/makeline/orders" | ConvertTo-Json -Depth 5
 ```
 
-### 4. Complete an Order via Store Admin API
+### 5. Complete an Order via Store Admin API
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8084/api/admin/makeline/orders/<ORDER_ID>/complete" -Method Post
 ```
 
-### 5. Manage Products via Store Admin Catalog API
+### 6. Manage Products via Store Admin Catalog API
 
 ```powershell
 # Add a new product
@@ -229,6 +253,7 @@ Invoke-RestMethod -Uri "http://localhost:8081/api/products"
 
 | Variable | Default Value | Description |
 |---|---|---|
+| `SPRING_BOOT_ADMIN_CLIENT_URL` | `http://localhost:9000` | Spring Boot Admin server registration URL |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/petstore` | JDBC connection string |
 | `SPRING_DATASOURCE_USERNAME` | `petstore` | PostgreSQL username |
 | `SPRING_DATASOURCE_PASSWORD` | `petstore` | PostgreSQL password |
@@ -247,6 +272,7 @@ Invoke-RestMethod -Uri "http://localhost:8081/api/products"
 To build individual multi-stage Docker/Podman images from repository root:
 
 ```powershell
+podman build -t pet-store-admin-server:latest -f services/admin-server/Dockerfile .
 podman build -t pet-store-product-service:latest -f services/product-service/Dockerfile .
 podman build -t pet-store-order-service:latest -f services/order-service/Dockerfile .
 podman build -t pet-store-makeline-service:latest -f services/makeline-service/Dockerfile .

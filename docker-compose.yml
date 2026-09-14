@@ -27,6 +27,12 @@ services:
       timeout: 5s
       retries: 10
 
+  admin-server:
+    build:
+      context: .
+      dockerfile: services/admin-server/Dockerfile
+    ports: ["9000:9000"]
+
   product-service:
     build:
       context: .
@@ -36,9 +42,13 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
       - SPRING_DATASOURCE_USERNAME=petstore
       - SPRING_DATASOURCE_PASSWORD=petstore
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://product-service:8081
     depends_on:
       postgres:
         condition: service_healthy
+      admin-server:
+        condition: service_started
 
   order-service:
     build:
@@ -50,11 +60,15 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
       - SPRING_DATASOURCE_USERNAME=petstore
       - SPRING_DATASOURCE_PASSWORD=petstore
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://order-service:8082
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      admin-server:
+        condition: service_started
 
   makeline-service:
     build:
@@ -66,11 +80,15 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petstore
       - SPRING_DATASOURCE_USERNAME=petstore
       - SPRING_DATASOURCE_PASSWORD=petstore
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://makeline-service:8083
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      admin-server:
+        condition: service_started
 
   store-front:
     build:
@@ -80,9 +98,12 @@ services:
     environment:
       - PRODUCT_SERVICE_URL=http://product-service:8081
       - ORDER_SERVICE_URL=http://order-service:8082
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://store-front:8080
     depends_on:
       - product-service
       - order-service
+      - admin-server
 
   store-admin:
     build:
@@ -93,10 +114,13 @@ services:
       - PRODUCT_SERVICE_URL=http://product-service:8081
       - ORDER_SERVICE_URL=http://order-service:8082
       - MAKELINE_SERVICE_URL=http://makeline-service:8083
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://store-admin:8084
     depends_on:
       - product-service
       - order-service
       - makeline-service
+      - admin-server
 
   virtual-customer:
     build:
@@ -108,9 +132,12 @@ services:
       - ORDER_SERVICE_URL=http://order-service:8082
       - SIMULATION_ENABLED=true
       - ORDER_INTERVAL_MS=8000
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://virtual-customer:8085
     depends_on:
       - product-service
       - order-service
+      - admin-server
 
   virtual-worker:
     build:
@@ -121,5 +148,8 @@ services:
       - MAKELINE_SERVICE_URL=http://makeline-service:8083
       - SIMULATION_ENABLED=true
       - WORKER_INTERVAL_MS=10000
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:9000
+      - SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL=http://virtual-worker:8086
     depends_on:
       - makeline-service
+      - admin-server

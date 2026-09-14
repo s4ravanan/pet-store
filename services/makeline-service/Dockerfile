@@ -2,6 +2,7 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY config/ config/
+COPY services/admin-server/pom.xml services/admin-server/pom.xml
 COPY services/product-service/pom.xml services/product-service/pom.xml
 COPY services/order-service/pom.xml services/order-service/pom.xml
 COPY services/makeline-service/pom.xml services/makeline-service/pom.xml

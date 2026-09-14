@@ -16,6 +16,7 @@
   <name>pet-store</name>
 
   <modules>
+    <module>services/admin-server</module>
     <module>services/product-service</module>
     <module>services/order-service</module>
     <module>services/makeline-service</module>
@@ -28,12 +29,25 @@
   <properties>
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
+    <spring-boot-admin.version>4.1.2</spring-boot-admin.version>
     <checkstyle.version>3.6.0</checkstyle.version>
     <checkstyle.tool.version>10.21.2</checkstyle.tool.version>
     <spotless.version>2.43.0</spotless.version>
     <enforcer.version>3.5.0</enforcer.version>
     <jacoco.version>0.8.12</jacoco.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>de.codecentric</groupId>
+        <artifactId>spring-boot-admin-dependencies</artifactId>
+        <version>${spring-boot-admin.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>

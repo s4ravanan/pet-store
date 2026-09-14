@@ -2,6 +2,15 @@ server:
   port: 8081
 
 spring:
+  application:
+    name: product-service
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9000}
+        instance:
+          service-base-url: ${SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE_BASE_URL:http://localhost:8081}
+          prefer-ip: false
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/petstore}
     username: ${SPRING_DATASOURCE_USERNAME:petstore}
@@ -18,4 +27,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
